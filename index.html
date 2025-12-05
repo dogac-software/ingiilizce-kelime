@@ -1,0 +1,1775 @@
+<!DOCTYPE html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>HANGEL</title>
+    <!-- Tailwind CSS (Hazır stil kütüphanesi) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- İkonlar -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      /* --- HANGEL ÖZEL TASARIM AYARLARI --- */
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #ffffff; /* Arka plan BEYAZ */
+        overflow-x: hidden;
+      }
+
+      /* Başlık Alanı */
+      header.hangel-header {
+        background-color: #ffffff;
+        text-align: center;
+        padding: 20px 0;
+        border-bottom: 2px solid #f0f0f0;
+        position: sticky;
+        top: 0;
+        z-index: 50;
+      }
+
+      header.hangel-header h1 {
+        color: #ff0000; /* KIRMIZI */
+        font-size: 3.5rem; /* ÇOK BÜYÜK */
+        margin: 0;
+        letter-spacing: 5px;
+        font-weight: 900;
+        text-transform: uppercase;
+        line-height: 1;
+      }
+
+      /* Müzik Butonu */
+      #musicBtn {
+        background: #333;
+        color: white;
+        border: none;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        cursor: pointer;
+        margin-top: 10px;
+        transition: 0.3s;
+      }
+      #musicBtn:hover {
+        background: #ff0000;
+      }
+
+      /* Ana Düzen (GIFler ve Uygulama) */
+      .hangel-layout {
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        min-height: calc(100vh - 150px);
+        padding: 20px;
+        gap: 20px;
+      }
+
+      /* GIF Alanları */
+      .gif-area {
+        width: 250px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 150px; /* Aşağı kaydırınca sabit kalsın */
+      }
+      .gif-area img {
+        width: 100%;
+        border-radius: 15px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      /* Uygulama Alanı (Ortadaki Kısım) */
+      #app-container {
+        flex: 1;
+        max-width: 600px; /* Uygulama çok genişlemesin */
+        width: 100%;
+        background: #f9f9f9;
+        border-radius: 20px;
+        padding: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        border: 1px solid #eee;
+        height: 80vh; /* İçerik kaydırılabilir olsun */
+        overflow-y: auto;
+        position: relative;
+      }
+
+      /* --- MOBİL AYARLARI --- */
+      @media (max-width: 1000px) {
+        .hangel-layout {
+          flex-direction: column;
+          align-items: center;
+          padding: 10px;
+        }
+
+        .gif-area {
+          width: 120px; /* Mobilde gifler küçük */
+          position: static;
+          display: inline-block;
+          margin: 0 10px;
+        }
+
+        /* Gifleri yan yana başlığın altına al */
+        .mobile-gif-container {
+          display: flex;
+          justify-content: center;
+          width: 100%;
+          margin-bottom: 15px;
+        }
+
+        /* Masaüstü gif yapılarını gizle/değiştir */
+        .desktop-only {
+          display: none;
+        }
+
+        #app-container {
+          height: auto;
+          min-height: 60vh;
+        }
+
+        header.hangel-header h1 {
+          font-size: 2.5rem;
+        }
+      }
+
+      @media (min-width: 1001px) {
+        .mobile-gif-container {
+          display: none;
+        }
+      }
+
+      /* --- KART EFEKTLERİ (VocabMaster'dan gelenler) --- */
+      .card-container {
+        perspective: 1000px;
+      }
+      .card-inner {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        transition: transform 0.6s;
+        transform-style: preserve-3d;
+      }
+      .card-inner.is-flipped {
+        transform: rotateY(180deg);
+      }
+      .card-face {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        backface-visibility: hidden;
+        border-radius: 1rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      }
+      .card-front {
+        background-color: white;
+        color: #1f2937;
+        z-index: 2;
+      }
+      /* Arka yüz rengi HANGEL uyumlu olsun */
+      .card-back {
+        background-color: #ff0000;
+        color: white;
+        transform: rotateY(180deg);
+        z-index: 1;
+      }
+
+      /* Animasyonlar */
+      .anim-pop {
+        animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      }
+      .anim-shake {
+        animation: shake 0.5s;
+      }
+      @keyframes pop {
+        0% {
+          transform: scale(0.9);
+          opacity: 0;
+        }
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+      @keyframes shake {
+        0%,
+        100% {
+          transform: translateX(0);
+        }
+        25% {
+          transform: translateX(-5px);
+        }
+        75% {
+          transform: translateX(5px);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- MÜZİK OYNATICI (Gizli) -->
+    <audio id="bgMusic" loop>
+      <source src="muzik.mp3" type="audio/mpeg" />
+    </audio>
+
+    <!-- BAŞLIK -->
+    <header class="hangel-header">
+      <h1>HANGEL</h1>
+      <button id="musicBtn" onclick="toggleMusic()">🎵 Müziği Başlat</button>
+    </header>
+
+    <!-- MOBİL İÇİN GIF ALANI (Sadece telefonda görünür) -->
+    <div class="mobile-gif-container">
+      <div class="gif-area">
+        <!-- GIF 1 -->
+        <img
+          src="gif1.gif"
+          onerror="this.src='https://media.giphy.com/media/l0HlOaQcLJ2hHpYkg/giphy.gif'"
+          alt="Gif 1"
+        />
+      </div>
+      <div class="gif-area">
+        <!-- GIF 2 -->
+        <img
+          src="gif2.gif"
+          onerror="this.src='https://media.giphy.com/media/3o7bu3XilJ5BOiSGic/giphy.gif'"
+          alt="Gif 2"
+        />
+      </div>
+    </div>
+
+    <!-- ANA DÜZEN -->
+    <div class="hangel-layout">
+      <!-- SOL GIF (Masaüstü) -->
+      <div class="gif-area desktop-only">
+        <!-- GIF 1 -->
+        <img
+          src="gif1.gif"
+          onerror="this.src='https://media.giphy.com/media/l0HlOaQcLJ2hHpYkg/giphy.gif'"
+          alt="Gif 1"
+        />
+      </div>
+
+      <!-- ORTA KISIM: UYGULAMA -->
+      <main id="app-container">
+        <!-- (VocabMaster İçeriği Başlangıcı) -->
+        <div id="dashboard-view">
+          <div class="flex justify-between items-center mb-6 border-b pb-4">
+            <h2 class="text-xl font-bold text-gray-800">Bölümler</h2>
+            <div class="flex gap-2">
+              <button
+                onclick="exportData()"
+                class="text-xs bg-gray-200 hover:bg-gray-300 px-3 py-1.5 rounded transition"
+              >
+                <i class="fas fa-save"></i> Yedekle
+              </button>
+              <button
+                onclick="openModal('add-section-modal')"
+                class="bg-red-600 hover:bg-red-700 text-white w-8 h-8 rounded-full shadow flex items-center justify-center"
+              >
+                <i class="fas fa-plus"></i>
+              </button>
+            </div>
+          </div>
+
+          <div id="sections-list" class="space-y-4">
+            <!-- Bölümler JS ile buraya gelecek -->
+          </div>
+
+          <div class="mt-10 text-center">
+            <button
+              onclick="hardReset()"
+              class="text-xs text-red-300 hover:text-red-500 underline"
+            >
+              Tüm Verileri Sıfırla
+            </button>
+          </div>
+        </div>
+
+        <!-- KELİME LİSTESİ GÖRÜNÜMÜ -->
+        <div id="section-view" class="hidden h-full flex flex-col">
+          <div
+            class="flex items-center justify-between mb-4 border-b border-gray-200 pb-2"
+          >
+            <button
+              onclick="goHome()"
+              class="text-gray-600 px-2 py-1 hover:bg-gray-100 rounded"
+            >
+              <i class="fas fa-arrow-left mr-1"></i> Geri
+            </button>
+            <div class="text-center">
+              <h2
+                id="current-section-title"
+                class="font-bold text-lg truncate max-w-[150px]"
+              >
+                Bölüm
+              </h2>
+              <span id="word-count" class="text-xs text-gray-500"
+                >0 kelime</span
+              >
+            </div>
+            <button
+              onclick="openStudyModeModal()"
+              class="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg shadow text-sm font-bold flex items-center gap-1 transition"
+            >
+              <i class="fas fa-play"></i> Başla
+            </button>
+          </div>
+
+          <div
+            id="words-list"
+            class="flex-1 overflow-y-auto space-y-2 pr-1 pb-20"
+          >
+            <!-- Kelimeler JS ile buraya -->
+          </div>
+
+          <!-- Kelime Ekle Butonu -->
+          <button
+            onclick="openModal('add-word-modal')"
+            class="absolute bottom-6 right-6 bg-red-600 text-white w-12 h-12 rounded-full shadow-xl flex items-center justify-center text-xl z-30 hover:bg-red-700 transition"
+          >
+            <i class="fas fa-plus"></i>
+          </button>
+        </div>
+
+        <!-- ÇALIŞMA MODU GÖRÜNÜMÜ -->
+        <div id="study-view" class="hidden h-full flex flex-col">
+          <div class="flex justify-between items-center mb-2">
+            <button
+              onclick="exitStudy()"
+              class="text-gray-500 hover:text-gray-800"
+            >
+              <i class="fas fa-times text-xl"></i>
+            </button>
+            <div class="flex flex-col items-center">
+              <span
+                class="text-xs font-bold text-red-600 tracking-widest uppercase"
+                id="study-mode-badge"
+                >MOD</span
+              >
+              <div class="text-sm font-mono text-gray-400" id="study-progress">
+                1 / 10
+              </div>
+            </div>
+            <div class="w-6"></div>
+          </div>
+
+          <div class="w-full bg-gray-200 rounded-full h-1.5 mb-6">
+            <div
+              id="study-progress-bar"
+              class="bg-red-500 h-1.5 rounded-full transition-all duration-300"
+              style="width: 0%"
+            ></div>
+          </div>
+
+          <!-- MOD: KART (Gizli cevap, tıklayınca döner) -->
+          <div
+            id="mode-card"
+            class="hidden flex-1 flex flex-col items-center justify-center relative perspective-container"
+          >
+            <div
+              class="w-full max-w-sm h-80 card-container cursor-pointer"
+              onclick="flipCard()"
+            >
+              <div
+                id="flashcard-inner"
+                class="card-inner shadow-xl rounded-2xl"
+              >
+                <div class="card-front border-2 border-gray-100">
+                  <span
+                    class="text-xs text-gray-400 absolute top-4 uppercase tracking-widest"
+                    >Soru</span
+                  >
+                  <h3
+                    id="card-term"
+                    class="text-4xl font-bold text-gray-800 text-center px-4"
+                  >
+                    Term
+                  </h3>
+                  <p
+                    class="absolute bottom-6 text-red-500 text-sm animate-bounce"
+                  >
+                    <i class="fas fa-hand-pointer mr-1"></i> Cevabı Gör
+                  </p>
+                </div>
+                <div class="card-back border-2 border-red-600">
+                  <span
+                    class="text-xs text-white absolute top-4 uppercase tracking-widest"
+                    >Cevap</span
+                  >
+                  <h3
+                    id="card-def"
+                    class="text-3xl font-medium text-center px-4"
+                  >
+                    Definition
+                  </h3>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 w-full mt-8">
+              <button
+                onclick="submitResult(false)"
+                class="bg-gray-200 hover:bg-gray-300 text-gray-600 py-3 rounded-xl font-bold shadow-sm transition"
+              >
+                <i class="fas fa-times mb-1"></i> Bilemedim
+              </button>
+              <button
+                onclick="submitResult(true)"
+                class="bg-red-100 hover:bg-red-200 text-red-600 py-3 rounded-xl font-bold shadow-sm transition"
+              >
+                <i class="fas fa-check mb-1"></i> Bildim
+              </button>
+            </div>
+          </div>
+
+          <!-- MOD: YAZMA -->
+          <div
+            id="mode-writing"
+            class="hidden flex-1 flex flex-col justify-center items-center"
+          >
+            <div
+              class="bg-white p-6 rounded-2xl shadow-lg w-full mb-6 border-t-4 border-red-500 text-center"
+            >
+              <span
+                class="text-xs text-gray-400 uppercase tracking-widest mb-2 block"
+                >Anlamı</span
+              >
+              <h3
+                id="write-question"
+                class="text-2xl font-bold text-gray-800 mb-6"
+              >
+                Elma
+              </h3>
+              <input
+                type="text"
+                id="write-input"
+                class="w-full text-center text-xl border-b-2 border-gray-300 focus:border-red-600 focus:outline-none py-2 bg-transparent"
+                placeholder="İngilizcesini yaz..."
+                autocomplete="off"
+              />
+            </div>
+            <button
+              onclick="checkWriting()"
+              class="bg-red-600 text-white w-full py-3 rounded-xl font-bold shadow hover:bg-red-700 transition"
+            >
+              Kontrol Et
+            </button>
+            <div
+              id="write-feedback"
+              class="mt-4 h-6 font-bold text-center"
+            ></div>
+          </div>
+
+          <!-- MOD: TEST -->
+          <div
+            id="mode-test"
+            class="hidden flex-1 flex flex-col justify-center w-full"
+          >
+            <div
+              class="bg-white p-6 rounded-2xl shadow-md w-full mb-6 text-center border border-gray-100"
+            >
+              <span class="text-xs text-gray-400 uppercase tracking-widest"
+                >Kelime</span
+              >
+              <h3
+                id="test-question"
+                class="text-3xl font-bold text-red-900 mt-2"
+              >
+                Apple
+              </h3>
+            </div>
+            <div id="test-options" class="grid grid-cols-1 gap-3 w-full"></div>
+          </div>
+        </div>
+        <!-- (VocabMaster İçeriği Bitişi) -->
+      </main>
+
+      <!-- SAĞ GIF (Masaüstü) -->
+      <div class="gif-area desktop-only">
+        <!-- GIF 2 -->
+        <img
+          src="gif2.gif"
+          onerror="this.src='https://media.giphy.com/media/3o7bu3XilJ5BOiSGic/giphy.gif'"
+          alt="Gif 2"
+        />
+      </div>
+    </div>
+
+    <!-- MODALLAR (Açılır pencereler) -->
+
+    <!-- Bölüm Ekleme -->
+    <div
+      id="add-section-modal"
+      class="fixed inset-0 bg-black bg-opacity-60 hidden flex items-center justify-center z-50 p-4 backdrop-blur-sm"
+    >
+      <div class="bg-white rounded-2xl p-6 w-full max-w-sm anim-pop shadow-2xl">
+        <h3 class="text-lg font-bold mb-4 text-gray-800">Yeni Bölüm</h3>
+        <input
+          type="text"
+          id="new-section-name"
+          placeholder="Bölüm Adı"
+          class="w-full bg-gray-50 border border-gray-300 p-3 rounded-lg mb-4 focus:ring-2 focus:ring-red-500 outline-none"
+        />
+        <div class="flex justify-end gap-3">
+          <button
+            onclick="closeModal('add-section-modal')"
+            class="text-gray-500 font-medium px-4 py-2 hover:bg-gray-100 rounded-lg"
+          >
+            İptal
+          </button>
+          <button
+            onclick="addSection()"
+            class="bg-red-600 text-white font-medium px-6 py-2 rounded-lg hover:bg-red-700"
+          >
+            Ekle
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Kelime Ekleme -->
+    <div
+      id="add-word-modal"
+      class="fixed inset-0 bg-black bg-opacity-60 hidden flex items-center justify-center z-50 p-4 backdrop-blur-sm"
+    >
+      <div class="bg-white rounded-2xl p-6 w-full max-w-sm anim-pop shadow-2xl">
+        <h3 class="text-lg font-bold mb-4 text-gray-800">Yeni Kelime</h3>
+        <div class="space-y-3">
+          <input
+            type="text"
+            id="new-word-term"
+            placeholder="İngilizce (Term)"
+            class="w-full bg-gray-50 border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-red-500 outline-none"
+          />
+          <input
+            type="text"
+            id="new-word-def"
+            placeholder="Türkçe (Definition)"
+            class="w-full bg-gray-50 border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-red-500 outline-none"
+          />
+        </div>
+        <div class="flex justify-end gap-3 mt-6">
+          <button
+            onclick="closeModal('add-word-modal')"
+            class="text-gray-500 font-medium px-4 py-2 hover:bg-gray-100 rounded-lg"
+          >
+            Kapat
+          </button>
+          <button
+            id="btn-add-word"
+            onclick="addWord()"
+            class="bg-red-600 text-white font-medium px-6 py-2 rounded-lg hover:bg-red-700 transition"
+          >
+            Ekle
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mod Seçimi -->
+    <div
+      id="mode-select-modal"
+      class="fixed inset-0 bg-black bg-opacity-70 hidden flex items-end sm:items-center justify-center z-50 p-4 backdrop-blur-sm"
+    >
+      <div
+        class="bg-white rounded-t-3xl sm:rounded-2xl p-6 w-full max-w-sm anim-pop shadow-2xl"
+      >
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-xl font-bold text-gray-800">Çalışma Modu Seç</h3>
+          <button
+            onclick="closeModal('mode-select-modal')"
+            class="text-gray-400 hover:text-gray-600"
+          >
+            <i class="fas fa-times text-xl"></i>
+          </button>
+        </div>
+        <div class="space-y-3">
+          <button
+            onclick="startSession('card')"
+            class="w-full flex items-center p-4 rounded-xl border-2 border-gray-100 hover:border-red-500 hover:bg-red-50 transition group"
+          >
+            <div
+              class="bg-red-100 text-red-600 w-12 h-12 rounded-full flex items-center justify-center text-xl mr-4 group-hover:bg-red-600 group-hover:text-white transition"
+            >
+              <i class="fas fa-layer-group"></i>
+            </div>
+            <div class="text-left">
+              <div class="font-bold text-gray-800">Kart Modu</div>
+              <div class="text-xs text-gray-500">Cevabı gizle ve çevir</div>
+            </div>
+          </button>
+          <button
+            onclick="startSession('test')"
+            class="w-full flex items-center p-4 rounded-xl border-2 border-gray-100 hover:border-purple-500 hover:bg-purple-50 transition group"
+          >
+            <div
+              class="bg-purple-100 text-purple-600 w-12 h-12 rounded-full flex items-center justify-center text-xl mr-4 group-hover:bg-purple-600 group-hover:text-white transition"
+            >
+              <i class="fas fa-list-ul"></i>
+            </div>
+            <div class="text-left">
+              <div class="font-bold text-gray-800">Test Modu</div>
+              <div class="text-xs text-gray-500">4 şıklı test</div>
+            </div>
+          </button>
+          <button
+            onclick="startSession('writing')"
+            class="w-full flex items-center p-4 rounded-xl border-2 border-gray-100 hover:border-orange-500 hover:bg-orange-50 transition group"
+          >
+            <div
+              class="bg-orange-100 text-orange-600 w-12 h-12 rounded-full flex items-center justify-center text-xl mr-4 group-hover:bg-orange-600 group-hover:text-white transition"
+            >
+              <i class="fas fa-keyboard"></i>
+            </div>
+            <div class="text-left">
+              <div class="font-bold text-gray-800">Yazma Modu</div>
+              <div class="text-xs text-gray-500">İngilizcesini yaz</div>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCRIPTS (Müzik ve Uygulama Mantığı) -->
+    <script>
+      // --- MÜZİK KONTROLÜ ---
+      const audio = document.getElementById("bgMusic");
+      const musicBtn = document.getElementById("musicBtn");
+      let isPlaying = false;
+
+      function toggleMusic() {
+        if (isPlaying) {
+          audio.pause();
+          musicBtn.innerText = "▶ Müziği Oynat";
+        } else {
+          audio.play();
+          musicBtn.innerText = "⏸ Müziği Durdur";
+        }
+        isPlaying = !isPlaying;
+      }
+
+      // Sayfa açılınca müzik denemesi
+      window.addEventListener("load", function () {
+        audio.volume = 0.5;
+        audio
+          .play()
+          .then(() => {
+            isPlaying = true;
+            musicBtn.innerText = "⏸ Müziği Durdur";
+          })
+          .catch((err) => {
+            // Otomatik çalma engellendi
+            isPlaying = false;
+            musicBtn.innerText = "▶ Müziği Başlat";
+          });
+      });
+
+      // --- OXFORD 3000 A1 VERİSİ (Kısaltılmış versiyon, tüm liste çalışır) ---
+      const rawA1Data = `
+a, an: bir
+about: hakkında
+above: yukarıda
+action: eylem
+adult: yetişkin
+advice: tavsiye
+afraid: korkmuş
+after: sonra
+again: tekrar
+age: yaş
+agree: katılmak
+air: hava
+airport: havalimanı
+all: hepsi
+also: ayrıca
+always: her zaman
+amazing: şaşırtıcı
+angry: kızgın
+animal: hayvan
+answer: cevap
+apple: elma
+April: Nisan
+area: alan
+arm: kol
+arrive: varmak
+art: sanat
+ask: sormak
+at: -de/-da
+August: Ağustos
+baby: bebek
+back: geri
+bad: kötü
+bag: çanta
+ball: top
+banana: muz
+bank: banka
+be: olmak
+beach: plaj
+beautiful: güzel
+because: çünkü
+become: olmak
+bed: yatak
+before: önce
+begin: başlamak
+behind: arkasında
+believe: inanmak
+best: en iyi
+better: daha iyi
+bicycle: bisiklet
+big: büyük
+bird: kuş
+birthday: doğum günü
+black: siyah
+blue: mavi
+boat: tekne
+body: vücut
+book: kitap
+boring: sıkıcı
+bottle: şişe
+box: kutu
+boy: erkek çocuk
+bread: ekmek
+break: kırmak
+breakfast: kahvaltı
+bring: getirmek
+brother: erkek kardeş
+build: inşa etmek
+bus: otobüs
+business: iş
+busy: meşgul
+buy: satın almak
+cake: kek
+call: aramak
+camera: kamera
+can: yapabilmek
+car: araba
+cat: kedi
+chair: sandalye
+change: değiştirmek
+cheap: ucuz
+check: kontrol etmek
+cheese: peynir
+chicken: tavuk
+child: çocuk
+chocolate: çikolata
+choose: seçmek
+city: şehir
+class: sınıf
+clean: temiz
+clock: saat
+close: kapatmak
+clothes: kıyafetler
+coffee: kahve
+cold: soğuk
+color: renk
+come: gelmek
+company: şirket
+computer: bilgisayar
+cook: pişirmek
+cool: havalı
+correct: doğru
+country: ülke
+course: kurs
+cow: inek
+crazy: çılgın
+cream: krema
+cry: ağlamak
+cup: fincan
+cut: kesmek
+dad: baba
+dance: dans
+dangerous: tehlikeli
+dark: karanlık
+date: tarih
+daughter: kız evlat
+day: gün
+dear: sevgili
+decide: karar vermek
+delicious: lezzetli
+describe: tanımlamak
+desk: masa
+dictionary: sözlük
+die: ölmek
+different: farklı
+difficult: zor
+dinner: akşam yemeği
+dirty: kirli
+do: yapmak
+doctor: doktor
+dog: köpek
+door: kapı
+down: aşağı
+draw: çizmek
+dream: rüya
+dress: elbise
+drink: içmek
+drive: sürmek
+driver: sürücü
+during: sırasında
+ear: kulak
+early: erken
+east: doğu
+easy: kolay
+eat: yemek
+egg: yumurta
+eight: sekiz
+elephant: fil
+eleven: on bir
+else: başka
+end: son
+enjoy: zevk almak
+enough: yeterli
+evening: akşam
+every: her
+everyone: herkes
+everything: her şey
+exam: sınav
+example: örnek
+excited: heyecanlı
+expensive: pahalı
+explain: açıklamak
+eye: göz
+face: yüz
+fact: gerçek
+fall: düşmek
+family: aile
+famous: ünlü
+farm: çiftlik
+fast: hızlı
+fat: şişman
+father: baba
+favourite: favori
+feel: hissetmek
+few: az
+field: alan
+fight: kavga
+fill: doldurmak
+film: film
+find: bulmak
+fine: iyi
+finish: bitirmek
+fire: ateş
+first: birinci
+fish: balık
+five: beş
+flight: uçuş
+floor: zemin
+flower: çiçek
+fly: uçmak
+food: yiyecek
+foot: ayak
+football: futbol
+for: için
+forest: orman
+forget: unutmak
+fork: çatal
+four: dört
+free: özgür
+friend: arkadaş
+from: -den
+fruit: meyve
+full: dolu
+fun: eğlence
+funny: komik
+future: gelecek
+game: oyun
+garden: bahçe
+get: almak
+girl: kız
+give: vermek
+glass: bardak
+go: gitmek
+good: iyi
+goodbye: hoşça kal
+grandfather: büyükbaba
+grandmother: büyükanne
+great: harika
+green: yeşil
+grey: gri
+group: grup
+grow: büyümek
+guess: tahmin etmek
+guitar: gitar
+hair: saç
+half: yarım
+hand: el
+happen: olmak
+happy: mutlu
+hard: zor
+hat: şapka
+hate: nefret etmek
+have: sahip olmak
+he: o
+head: baş
+health: sağlık
+hear: duymak
+heart: kalp
+heavy: ağır
+help: yardım etmek
+her: onun
+here: burada
+high: yüksek
+history: tarih
+hobby: hobi
+holiday: tatil
+home: ev
+hope: ummak
+horse: at
+hospital: hastane
+hot: sıcak
+hotel: otel
+hour: saat
+house: ev
+how: nasıl
+hundred: yüz
+hungry: aç
+husband: koca
+I: ben
+ice: buz
+idea: fikir
+if: eğer
+important: önemli
+in: içinde
+interest: ilgi
+interesting: ilginç
+internet: internet
+into: içine
+island: ada
+job: iş
+join: katılmak
+journey: yolculuk
+juice: meyve suyu
+just: sadece
+keep: tutmak
+key: anahtar
+kind: tür
+kitchen: mutfak
+know: bilmek
+language: dil
+large: geniş
+last: son
+late: geç
+laugh: gülmek
+learn: öğrenmek
+leave: ayrılmak
+left: sol
+leg: bacak
+lesson: ders
+letter: mektup
+library: kütüphane
+life: hayat
+light: ışık
+like: sevmek
+line: çizgi
+lion: aslan
+list: liste
+listen: dinlemek
+little: küçük
+live: yaşamak
+long: uzun
+look: bakmak
+lose: kaybetmek
+love: aşk
+luck: şans
+lunch: öğle yemeği
+machine: makine
+magazine: dergi
+make: yapmak
+man: adam
+many: çok
+map: harita
+market: market
+married: evli
+match: maç
+maybe: belki
+me: beni
+meal: öğün
+mean: anlamına gelmek
+meat: et
+meet: buluşmak
+meeting: toplantı
+member: üye
+menu: menü
+message: mesaj
+milk: süt
+million: milyon
+minute: dakika
+miss: özlemek
+mistake: hata
+model: model
+modern: modern
+mom: anne
+moment: an
+money: para
+month: ay
+moon: ay
+more: daha fazla
+morning: sabah
+most: en çok
+mother: anne
+mountain: dağ
+mouse: fare
+mouth: ağız
+move: hareket etmek
+movie: film
+much: çok
+music: müzik
+must: -meli
+my: benim
+name: isim
+natural: doğal
+near: yakın
+need: ihtiyaç duymak
+never: asla
+new: yeni
+news: haber
+newspaper: gazete
+next: sıradaki
+nice: hoş
+night: gece
+nine: dokuz
+no: hayır
+nobody: kimse
+north: kuzey
+nose: burun
+not: değil
+nothing: hiçbir şey
+now: şimdi
+number: numara
+nurse: hemşire
+object: nesne
+office: ofis
+often: sık sık
+old: yaşlı
+on: üzerinde
+once: bir kez
+one: bir
+only: sadece
+open: açık
+or: veya
+orange: turuncu
+order: sipariş
+other: diğer
+our: bizim
+out: dışarı
+outside: dışarıda
+over: üzerinde
+own: kendi
+page: sayfa
+paint: boyamak
+pair: çift
+paper: kağıt
+parent: ebeveyn
+park: park
+part: parça
+party: parti
+pass: geçmek
+past: geçmiş
+pay: ödemek
+pen: kalem
+pencil: kurşun kalem
+people: insanlar
+perfect: mükemmel
+person: kişi
+phone: telefon
+photo: fotoğraf
+picture: resim
+piece: parça
+pig: domuz
+pink: pembe
+place: yer
+plan: plan
+plane: uçak
+plant: bitki
+play: oynamak
+player: oyuncu
+please: lütfen
+point: puan
+police: polis
+pool: havuz
+poor: fakir
+popular: popüler
+possible: mümkün
+potato: patates
+practice: pratik
+prefer: tercih etmek
+prepare: hazırlamak
+present: hediye
+price: fiyat
+problem: sorun
+product: ürün
+programme: program
+project: proje
+purple: mor
+put: koymak
+question: soru
+quick: hızlı
+quiet: sessiz
+quite: oldukça
+radio: radyo
+rain: yağmur
+read: okumak
+ready: hazır
+real: gerçek
+really: gerçekten
+reason: sebep
+red: kırmızı
+relax: rahatlamak
+remember: hatırlamak
+repeat: tekrar etmek
+report: rapor
+restaurant: restoran
+result: sonuç
+return: dönmek
+rice: pirinç
+rich: zengin
+ride: sürmek
+right: doğru
+river: nehir
+road: yol
+room: oda
+run: koşmak
+sad: üzgün
+salt: tuz
+same: aynı
+sandwich: sandviç
+say: söylemek
+school: okul
+science: bilim
+sea: deniz
+second: ikinci
+see: görmek
+sell: satmak
+send: göndermek
+sentence: cümle
+seven: yedi
+share: paylaşmak
+she: o
+sheep: koyun
+shirt: gömlek
+shoe: ayakkabı
+shop: dükkan
+short: kısa
+should: -meli
+show: göstermek
+shower: duş
+sick: hasta
+side: yan
+sign: işaret
+silver: gümüş
+simple: basit
+sing: şarkı söylemek
+singer: şarkıcı
+sister: kız kardeş
+sit: oturmak
+six: altı
+size: beden
+skill: yetenek
+skirt: etek
+sky: gökyüzü
+sleep: uyumak
+slow: yavaş
+small: küçük
+smart: zeki
+smell: koklamak
+smile: gülümsemek
+smoke: sigara içmek
+snow: kar
+so: bu yüzden
+soap: sabun
+sock: çorap
+soft: yumuşak
+some: bazı
+somebody: birisi
+something: bir şey
+sometimes: bazen
+son: erkek evlat
+song: şarkı
+soon: yakında
+sorry: üzgün
+sound: ses
+soup: çorba
+south: güney
+space: uzay
+speak: konuşmak
+special: özel
+spell: hecelemek
+spend: harcamak
+sport: spor
+spring: ilkbahar
+stand: ayakta durmak
+star: yıldız
+start: başlamak
+station: istasyon
+stay: kalmak
+still: hala
+stop: durmak
+story: hikaye
+street: sokak
+strong: güçlü
+student: öğrenci
+study: çalışmak
+style: tarz
+subject: konu
+success: başarı
+sugar: şeker
+summer: yaz
+sun: güneş
+supermarket: süpermarket
+sure: emin
+surprise: sürpriz
+sweet: tatlı
+swim: yüzmek
+table: masa
+take: almak
+talk: konuşmak
+tall: uzun
+tea: çay
+teach: öğretmek
+teacher: öğretmen
+team: takım
+teenager: genç
+telephone: telefon
+television: televizyon
+tell: anlatmak
+ten: on
+tennis: tenis
+terrible: berbat
+test: test
+text: metin
+than: -den
+thank: teşekkür etmek
+that: şu
+the: o
+their: onların
+them: onları
+then: sonra
+there: orada
+they: onlar
+thing: şey
+think: düşünmek
+third: üçüncü
+thirsty: susamış
+thirteen: on üç
+thirty: otuz
+this: bu
+thousand: bin
+three: üç
+through: içinden
+ticket: bilet
+time: zaman
+tired: yorgun
+to: -e
+today: bugün
+together: birlikte
+toilet: tuvalet
+tomato: domates
+tomorrow: yarın
+tonight: bu gece
+too: çok
+tooth: diş
+top: üst
+topic: konu
+tourist: turist
+town: kasaba
+toy: oyuncak
+traffic: trafik
+train: tren
+travel: seyahat etmek
+tree: ağaç
+trip: gezi
+true: doğru
+try: denemek
+turn: dönmek
+twelve: on iki
+twenty: yirmi
+two: iki
+type: tür
+umbrella: şemsiye
+uncle: amca
+under: altında
+understand: anlamak
+university: üniversite
+until: -e kadar
+up: yukarı
+us: bizi
+use: kullanmak
+useful: kullanışlı
+usually: genellikle
+vacation: tatil
+vegetable: sebze
+very: çok
+video: video
+village: köy
+visit: ziyaret etmek
+wait: beklemek
+waiter: garson
+wake: uyanmak
+walk: yürümek
+wall: duvar
+want: istemek
+warm: ılık
+wash: yıkamak
+watch: izlemek
+water: su
+way: yol
+we: biz
+wear: giymek
+weather: hava
+week: hafta
+weekend: hafta sonu
+welcome: hoş geldiniz
+well: iyi
+west: batı
+what: ne
+when: ne zaman
+where: nerede
+which: hangisi
+white: beyaz
+who: kim
+why: neden
+wife: eş
+will: -ecek
+win: kazanmak
+wind: rüzgar
+window: pencere
+wine: şarap
+winter: kış
+with: ile
+without: olmadan
+woman: kadın
+wonderful: harika
+word: kelime
+work: çalışmak
+world: dünya
+worry: endişelenmek
+write: yazmak
+wrong: yanlış
+year: yıl
+yellow: sarı
+yes: evet
+yesterday: dün
+you: sen
+young: genç
+your: senin
+zoo: hayvanat bahçesi
+      `;
+
+      // --- APP LOGIC (VocabMaster Mantığı) ---
+
+      let appData = [];
+      let currentSectionId = null;
+      let studySession = {
+        queue: [],
+        mode: "card",
+        currentIndex: 0,
+        results: [],
+      };
+
+      function init() {
+        const stored = localStorage.getItem("hangelData_v1");
+        if (stored) {
+          appData = JSON.parse(stored);
+        } else {
+          parseAndLoadDefaultData();
+        }
+        renderSections();
+      }
+
+      function parseAndLoadDefaultData() {
+        const lines = rawA1Data.trim().split("\n");
+        let currentSection = null;
+        let sectionCounter = 1;
+        let wordCounter = 0;
+        const WORDS_PER_SECTION = 50;
+
+        appData = [];
+
+        lines.forEach((line) => {
+          const parts = line.split(":");
+          if (parts.length < 2) return;
+
+          const term = parts[0].trim();
+          const def = parts[1].trim();
+
+          if (!currentSection || wordCounter >= WORDS_PER_SECTION) {
+            currentSection = {
+              id: Date.now() + Math.random(),
+              name: `A1 - Bölüm ${sectionCounter}`,
+              words: [],
+            };
+            appData.push(currentSection);
+            sectionCounter++;
+            wordCounter = 0;
+          }
+
+          currentSection.words.push({
+            id: Date.now() + Math.random(),
+            term: term,
+            definition: def,
+            stats: { history: [] },
+          });
+          wordCounter++;
+        });
+        saveData();
+      }
+
+      function saveData() {
+        localStorage.setItem("hangelData_v1", JSON.stringify(appData));
+        renderSections();
+      }
+
+      function hardReset() {
+        if (confirm("DİKKAT! Tüm ilerlemen silinecek. Emin misin?")) {
+          localStorage.removeItem("hangelData_v1");
+          location.reload();
+        }
+      }
+
+      function renderSections() {
+        const list = document.getElementById("sections-list");
+        list.innerHTML = "";
+
+        appData.forEach((section) => {
+          let totalScore = 0;
+          let scoredWords = 0;
+
+          section.words.forEach((w) => {
+            const score = calculateScore(w.stats.history);
+            if (score !== null) {
+              totalScore += score;
+              scoredWords++;
+            }
+          });
+
+          const sectionAvg =
+            scoredWords > 0 ? Math.round(totalScore / scoredWords) : 0;
+          const progressColor =
+            sectionAvg > 80
+              ? "bg-green-500"
+              : sectionAvg > 50
+              ? "bg-yellow-500"
+              : "bg-red-500";
+
+          const el = document.createElement("div");
+          el.className =
+            "bg-white p-5 rounded-2xl shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition relative group";
+          el.innerHTML = `
+            <div onclick="openSection('${section.id}')">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="font-bold text-lg text-gray-800">${section.name}</h3>
+                    <span class="text-xs font-bold px-2 py-1 rounded bg-gray-100 text-gray-600">%${sectionAvg} Başarı</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2 mb-2">
+                    <div class="${progressColor} h-2 rounded-full transition-all duration-500" style="width: ${sectionAvg}%"></div>
+                </div>
+                <p class="text-xs text-gray-400">${section.words.length} kelime</p>
+            </div>
+            <button onclick="deleteSection('${section.id}')" class="absolute top-5 right-2 text-gray-300 hover:text-red-500 p-2 z-10"><i class="fas fa-trash"></i></button>
+          `;
+          list.appendChild(el);
+        });
+      }
+
+      function calculateScore(history) {
+        if (!history || history.length === 0) return 0;
+        const sum = history.reduce((a, b) => a + b, 0);
+        return Math.round((sum / history.length) * 100);
+      }
+
+      function openSection(id) {
+        const section = appData.find((s) => s.id == id);
+        if (!section) return;
+
+        currentSectionId = section.id;
+        document.getElementById("dashboard-view").classList.add("hidden");
+        document.getElementById("section-view").classList.remove("hidden");
+        document.getElementById("current-section-title").innerText =
+          section.name;
+        renderWords();
+      }
+
+      function renderWords() {
+        const section = appData.find((s) => s.id == currentSectionId);
+        const list = document.getElementById("words-list");
+        document.getElementById(
+          "word-count"
+        ).innerText = `${section.words.length} kelime`;
+        list.innerHTML = "";
+
+        [...section.words].reverse().forEach((word) => {
+          const score = calculateScore(word.stats.history);
+          let scoreClass = "bg-gray-200";
+          if (word.stats.history.length > 0) {
+            scoreClass =
+              score >= 80
+                ? "bg-green-500"
+                : score >= 50
+                ? "bg-yellow-400"
+                : "bg-red-400";
+          }
+
+          const item = document.createElement("div");
+          item.className =
+            "bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center";
+          item.innerHTML = `
+            <div class="flex items-center gap-3 overflow-hidden">
+                <div class="w-2 h-2 rounded-full ${scoreClass} flex-shrink-0"></div>
+                <div class="truncate">
+                    <div class="font-bold text-gray-800 text-lg">${word.term}</div>
+                    <div class="text-sm text-gray-500 truncate">${word.definition}</div>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="text-xs font-mono text-gray-300 mr-2">%${score}</span>
+                <button onclick="deleteWord('${word.id}')" class="text-gray-300 hover:text-red-500 p-2"><i class="fas fa-trash-alt"></i></button>
+            </div>
+          `;
+          list.appendChild(item);
+        });
+      }
+
+      function addSection() {
+        const name = document.getElementById("new-section-name").value.trim();
+        if (!name) return;
+        appData.push({ id: Date.now(), name: name, words: [] });
+        saveData();
+        document.getElementById("new-section-name").value = "";
+        closeModal("add-section-modal");
+      }
+
+      function deleteSection(id) {
+        if (confirm("Silmek istediğine emin misin?")) {
+          appData = appData.filter((s) => s.id != id);
+          saveData();
+        }
+      }
+
+      function addWord() {
+        const term = document.getElementById("new-word-term").value.trim();
+        const def = document.getElementById("new-word-def").value.trim();
+        if (!term || !def) return;
+
+        const section = appData.find((s) => s.id == currentSectionId);
+        section.words.push({
+          id: Date.now(),
+          term: term,
+          definition: def,
+          stats: { history: [] },
+        });
+        saveData();
+
+        document.getElementById("new-word-term").value = "";
+        document.getElementById("new-word-def").value = "";
+        renderWords();
+        closeModal("add-word-modal");
+      }
+
+      function deleteWord(id) {
+        const section = appData.find((s) => s.id == currentSectionId);
+        section.words = section.words.filter((w) => w.id != id);
+        saveData();
+        renderWords();
+      }
+
+      function openStudyModeModal() {
+        const section = appData.find((s) => s.id == currentSectionId);
+        if (section.words.length === 0) {
+          alert("Kelime yok!");
+          return;
+        }
+        openModal("mode-select-modal");
+      }
+
+      function startSession(mode) {
+        closeModal("mode-select-modal");
+        const section = appData.find((s) => s.id == currentSectionId);
+
+        let pool = [...section.words];
+        pool.sort((a, b) => {
+          const scoreA = calculateScore(a.stats.history);
+          const scoreB = calculateScore(b.stats.history);
+          return scoreA - scoreB + (Math.random() * 40 - 20);
+        });
+
+        const queue = pool.slice(0, 20);
+        queue.sort(() => Math.random() - 0.5);
+
+        studySession = {
+          queue: queue,
+          mode: mode,
+          currentIndex: 0,
+          results: [],
+        };
+
+        document.getElementById("section-view").classList.add("hidden");
+        document.getElementById("study-view").classList.remove("hidden");
+        document.getElementById("mode-card").classList.add("hidden");
+        document.getElementById("mode-writing").classList.add("hidden");
+        document.getElementById("mode-test").classList.add("hidden");
+        document.getElementById(`mode-${mode}`).classList.remove("hidden");
+
+        const modeNames = { card: "KART", writing: "YAZMA", test: "TEST" };
+        document.getElementById("study-mode-badge").innerText = modeNames[mode];
+
+        loadQuestion();
+      }
+
+      function loadQuestion() {
+        if (studySession.currentIndex >= studySession.queue.length) {
+          finishSession();
+          return;
+        }
+
+        const word = studySession.queue[studySession.currentIndex];
+        const progress =
+          (studySession.currentIndex / studySession.queue.length) * 100;
+        document.getElementById(
+          "study-progress-bar"
+        ).style.width = `${progress}%`;
+        document.getElementById("study-progress").innerText = `${
+          studySession.currentIndex + 1
+        } / ${studySession.queue.length}`;
+
+        document
+          .getElementById("flashcard-inner")
+          .classList.remove("is-flipped");
+        document.getElementById("write-input").value = "";
+        document.getElementById("write-feedback").innerText = "";
+
+        if (studySession.mode === "card") {
+          document.getElementById("card-term").innerText = word.term;
+          document.getElementById("card-def").innerText = word.definition;
+        } else if (studySession.mode === "writing") {
+          document.getElementById("write-question").innerText = word.definition;
+          document.getElementById("write-input").focus();
+        } else if (studySession.mode === "test") {
+          document.getElementById("test-question").innerText = word.term;
+          generateTestOptions(word);
+        }
+      }
+
+      function flipCard() {
+        document
+          .getElementById("flashcard-inner")
+          .classList.toggle("is-flipped");
+      }
+
+      function checkWriting() {
+        const input = document
+          .getElementById("write-input")
+          .value.trim()
+          .toLowerCase();
+        const word = studySession.queue[studySession.currentIndex];
+        const correct = word.term.toLowerCase();
+        const feedback = document.getElementById("write-feedback");
+
+        if (input === correct) {
+          feedback.innerText = "Doğru!";
+          feedback.className =
+            "mt-4 h-6 font-bold text-center text-green-500 anim-pop";
+          setTimeout(() => submitResult(true), 800);
+        } else {
+          feedback.innerText = `Yanlış! Doğrusu: ${word.term}`;
+          feedback.className =
+            "mt-4 h-6 font-bold text-center text-red-500 anim-shake";
+          setTimeout(() => submitResult(false), 2000);
+        }
+      }
+
+      function generateTestOptions(correctWord) {
+        const container = document.getElementById("test-options");
+        container.innerHTML = "";
+        const allWords = appData.flatMap((s) => s.words);
+        let options = [correctWord];
+        while (options.length < 4 && allWords.length > 4) {
+          const randomWord =
+            allWords[Math.floor(Math.random() * allWords.length)];
+          if (!options.find((w) => w.id === randomWord.id)) {
+            options.push(randomWord);
+          }
+        }
+        options.sort(() => Math.random() - 0.5);
+
+        options.forEach((opt) => {
+          const btn = document.createElement("button");
+          btn.className =
+            "w-full p-4 text-left border rounded-xl hover:bg-gray-100 transition font-medium text-gray-700";
+          btn.innerText = opt.definition;
+          btn.onclick = () => {
+            const isCorrect = opt.id === correctWord.id;
+            if (isCorrect) {
+              btn.classList.add(
+                "bg-green-100",
+                "border-green-500",
+                "text-green-700"
+              );
+              setTimeout(() => submitResult(true), 600);
+            } else {
+              btn.classList.add("bg-red-100", "border-red-500", "text-red-700");
+              setTimeout(() => submitResult(false), 1500);
+            }
+          };
+          container.appendChild(btn);
+        });
+      }
+
+      function submitResult(isCorrect) {
+        const word = studySession.queue[studySession.currentIndex];
+        word.stats.history.push(isCorrect ? 1 : 0);
+        if (word.stats.history.length > 10) word.stats.history.shift();
+
+        const section = appData.find((s) => s.id == currentSectionId);
+        const actualWord = section.words.find((w) => w.id == word.id);
+        if (actualWord) actualWord.stats = word.stats;
+        saveData();
+
+        studySession.currentIndex++;
+        loadQuestion();
+      }
+
+      function finishSession() {
+        alert("Harika! Çalışma tamamlandı.");
+        exitStudy();
+      }
+
+      function goHome() {
+        document.getElementById("section-view").classList.add("hidden");
+        document.getElementById("dashboard-view").classList.remove("hidden");
+        renderSections();
+      }
+
+      function exitStudy() {
+        document.getElementById("study-view").classList.add("hidden");
+        document.getElementById("section-view").classList.remove("hidden");
+        renderWords();
+      }
+
+      function openModal(id) {
+        document.getElementById(id).classList.remove("hidden");
+      }
+      function closeModal(id) {
+        document.getElementById(id).classList.add("hidden");
+      }
+
+      function exportData() {
+        navigator.clipboard
+          .writeText(JSON.stringify(appData))
+          .then(() => alert("Veriler kopyalandı!"));
+      }
+
+      document
+        .getElementById("write-input")
+        .addEventListener("keypress", function (e) {
+          if (e.key === "Enter") checkWriting();
+        });
+
+      init();
+    </script>
+  </body>
+</html>
